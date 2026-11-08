@@ -47,8 +47,21 @@ export class InventoryPage extends BasePage {
     return this.page.getByTestId(`remove-${slug}`);
   }
 
+  // If a click lands while the list is still rendering, the button does not switch to "Remove": click once more.
+  // A button that never works (a real defect) is left as it is, so the test still sees the defect.
+  private async addOne(slug: string): Promise<void> {
+    await this.addButton(slug).click();
+    const switched = await this.removeButton(slug)
+      .waitFor({ timeout: 1_500 })
+      .then(
+        () => true,
+        () => false,
+      );
+    if (!switched) await this.addButton(slug).click();
+  }
+
   async add(...slugs: string[]): Promise<void> {
-    for (const slug of slugs) await this.addButton(slug).click();
+    for (const slug of slugs) await this.addOne(slug);
   }
 
   async openProduct(name: string): Promise<void> {
